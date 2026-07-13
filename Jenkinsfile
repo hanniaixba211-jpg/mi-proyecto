@@ -64,18 +64,54 @@ pipeline {
 
     post {
 
-        success {
-            echo "Pipeline completado correctamente para ${env.APP_NAME}"
-        }
+    success {
+        echo "Pipeline completado correctamente para ${env.APP_NAME}"
 
-        failure {
-            echo "El pipeline falló."
-        }
+        mail(
+            to: 'hanniaixba211@gmail.com',
+            subject: "Build EXITOSO - ${env.JOB_NAME}",
+            body: """
+Hola,
 
-        always {
-            echo "Build #${env.BUILD_NUMBER} finalizado."
-        }
+El pipeline terminó correctamente.
 
+Proyecto: ${env.APP_NAME}
+Job: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+
+Saludos,
+Jenkins
+"""
+        )
     }
+
+    failure {
+        echo "El pipeline falló."
+
+        mail(
+            to: 'hanniaixba211@gmail.com',
+            subject: "Build FALLIDO - ${env.JOB_NAME}",
+            body: """
+Hola,
+
+El pipeline falló.
+
+Proyecto: ${env.APP_NAME}
+Job: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+
+Revisa Jenkins para más detalles.
+
+Saludos,
+Jenkins
+"""
+        )
+    }
+
+    always {
+        echo "Build #${env.BUILD_NUMBER} finalizado."
+    }
+
+}
 
 }
