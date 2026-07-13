@@ -1,8 +1,32 @@
 pipeline {
+
     agent {
         docker {
             image 'node:18-alpine'
         }
+    }
+
+    parameters {
+        choice(
+            name: 'ENTORNO',
+            choices: ['staging', 'produccion'],
+            description: 'Selecciona el entorno'
+        )
+
+        booleanParam(
+            name: 'EJECUTAR_DEPLOY',
+            defaultValue: false,
+            description: '¿Ejecutar deploy?'
+        )
+    }
+
+    environment {
+        APP_NAME = "mi-proyecto"
+    }
+
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
     stages {
@@ -13,7 +37,7 @@ pipeline {
             }
         }
 
-        stage('Ejecutar pruebas') {
+        stage('Pruebas') {
             steps {
                 sh 'npm test'
             }
@@ -21,18 +45,37 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo 'Build completado correctamente'
+                sh 'npm run build'
+                archiveArtifacts artifacts: 'dist/**', fingerprint: true
             }
         }
+
+        stage('Deploy') {
+            when {
+                expression { params.EJECUTAR_DEPLOY }
+            }
+
+            steps {
+                echo "Desplegando ${env.APP_NAME} en ${params.ENTORNO}"
+            }
+        }
+
     }
 
     post {
+
         success {
-            echo 'Pipeline ejecutado correctamente'
+            echo "Pipeline completado correctamente para ${env.APP_NAME}"
         }
 
         failure {
-            echo 'Pipeline con errores'
+            echo "El pipeline falló."
         }
+
+        always {
+            echo "Build #${env.BUILD_NUMBER} finalizado."
+        }
+
     }
+
 }
